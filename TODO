@@ -2,3 +2,6 @@
 1. Add args, return types, raw strings based check to the code base.
 2. Add intent based check to the code base. Especially system intent.
 3. Refactor the code to detect duplication of SimpleRules and reuse computed result.
+4. Support inherited classes, i.e. users can extend framework classes and call
+corresponding methods, we should support check by looking at the super class
+method invocations.
