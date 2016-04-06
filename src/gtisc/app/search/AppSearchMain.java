@@ -9,6 +9,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
+import gtisc.app.search.test.SampleConfigGen;
 import gtisc.jobrunner.JobRunner.AppSearchConfig;
 
 
@@ -91,10 +92,10 @@ public class AppSearchMain {
 		AppSearch appSearch = new AppSearch(config);
 		switch(config.getJobName()) {
 		case "dumpConfig":
-			// The demo config
+			// The demo config, initialized in appSearch
 			appSearch.saveConfig(config.getResultDir(), false);
-			// The new config
-			appSearch.saveConfigBuilder(config.getResultDir(), false, appSearch.createScannerConfig());
+			// The new config, created by SampleConfigGen
+			AppSearchUtil.saveConfigBuilder(config.getResultDir(), false, SampleConfigGen.createScannerConfig());
 			break;
 		case "search":
 			appSearch.analyzeAll();

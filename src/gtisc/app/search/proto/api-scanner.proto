@@ -25,6 +25,9 @@ message SimpleRule {
   // Raw string refer to any kind of strings that are used in the program.
   // There may be multiple number of strings to match.
   repeated RegexRule raw_strings = 9;
+
+  // Permission strings can also be used as filter
+  repeated RegexRule permissions = 10;
 }
 
 message ConjunctRule {

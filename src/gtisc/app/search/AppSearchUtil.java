@@ -1,7 +1,6 @@
 package gtisc.app.search;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,6 +17,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 
 import gtisc.apiscanner.ApiScanner.RegexRule;
+import gtisc.apiscanner.ApiScanner.ScannerConfig;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
@@ -139,5 +139,26 @@ public class AppSearchUtil {
 		// Returns the digest of file fin in lower case
 		MessageDigest module = MessageDigest.getInstance(alg);
 		return DatatypeConverter.printHexBinary( module.digest(Files.readAllBytes(fin.toPath())) ).toLowerCase();
+	}
+
+	public static void saveConfig(String resultDir, boolean binary, ScannerConfig sc) {
+		File path;
+		if (sc.hasConfigFilename())
+			path = new File(sc.getConfigFilename());
+		else
+			path = new File(resultDir, sc.getName() + configSuffix);
+		
+		System.out.println("saving config to " + path.getAbsolutePath());
+		try {
+			AppSearchUtil.saveMessage(sc, path, binary);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void saveConfigBuilder(String resultDir, boolean binary, ScannerConfig.Builder sb) {
+		File path = new File(resultDir, sb.getName() + configSuffix);
+		sb.setConfigFilename(path.getAbsolutePath());
+		saveConfig(resultDir, binary, sb.build());
 	}
 }
