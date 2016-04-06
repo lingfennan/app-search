@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,6 +48,31 @@ public class AppSearchUtil {
 			invokeExpr = invokeStmt.getInvokeExpr();
 		}
 		return invokeExpr;
+	}
+	
+	public static boolean checkRegexRuleList(List<RegexRule> rules, List<String> candidateList) {
+		Set<String> candidate = new HashSet<String>(candidateList);
+		for (RegexRule rule : rules) {
+			Set<String> matched = new HashSet<String>();
+			checkRegexRule(rule, candidate, matched);
+			if (matched.size() == 0) return false; 
+		}
+		return true;
+	}
+	
+	public static void checkRegexRule(RegexRule rule, Set<String> candidate, Set<String> matched) {
+		String content = rule.getContent();
+		if (rule.getPartialMatch()) {
+			for (String key: candidate) {
+				if (key.contains(content)) {
+					matched.add(key);
+				}
+			}
+		} else {
+			if (candidate.contains(content)) {
+				matched.add(content);
+			}
+		}
 	}
 	
 	public static void checkRegexRule(RegexRule rule, boolean initialized,

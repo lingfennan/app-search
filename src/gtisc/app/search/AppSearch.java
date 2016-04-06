@@ -257,20 +257,10 @@ public class AppSearch {
 				}
 			}
 		}
-		System.out.println("Matching the specified rules");
-
-		// Match the rules
-		Application.Builder appBuilder = Application.newBuilder();		
-		boolean found = mathcesRule(packageDefs, classDefs, methodDefs, methodNameOrSubSigDefs,
-				packageInvocations, classInvocations, methodInvocations, methodNameOrSubSigInvocations,
-				appBuilder);
-		
-		// Cleanup
-		soot.G.reset();
-		if (!jobConfig.getKeepSootOutput()) FileUtils.deleteDirectory(new File(sootOutDir));
-		if (!found) return null;
 		
 		// add misc information, parse AndroidManifest.xml, set Activity, Service, Receiver, Provider, Permissions
+		System.out.println("Parsing the AndroidManifest.xml to get more information");
+		Application.Builder appBuilder = Application.newBuilder();
 		appBuilder.setDigest(AppSearchUtil.getDigest(apkPath, "SHA-256"));
 		appBuilder.setFilepath(apkPath.getAbsolutePath());
 		ProcessManifest processManifest = null;
@@ -287,7 +277,19 @@ public class AppSearch {
 			e.printStackTrace();
 		} catch (XmlPullParserException e) {
 			e.printStackTrace();
-		}
+		}		
+
+		// Match the rules
+		System.out.println("Matching the specified rules");
+		boolean found = mathcesRule(packageDefs, classDefs, methodDefs, methodNameOrSubSigDefs,
+				packageInvocations, classInvocations, methodInvocations, methodNameOrSubSigInvocations,
+				appBuilder);
+		
+		// Cleanup
+		soot.G.reset();
+		if (!jobConfig.getKeepSootOutput()) FileUtils.deleteDirectory(new File(sootOutDir));
+		if (!found) return null;
+		
 		System.out.println("Found match for app: " + apkPath.getName());
 		return appBuilder.build();
 	}
@@ -319,18 +321,20 @@ public class AppSearch {
 						Set<SootMethod> frameworkMethods = new HashSet<SootMethod>();
 						boolean initialized = false;
 						
-						// Method SubSignature
+						// Method name or SubSignature
 						if (simpleRule.hasMethodNameOrSubSignature()) {
 							AppSearchUtil.checkRegexRule(simpleRule.getMethodNameOrSubSignature(), initialized,
 									methodNameOrSubSigDefs, methodNameOrSubSigInvocations,
 									userMethods, frameworkMethods);
 							initialized = true;
 						}
+						// Class name
 						if (simpleRule.hasClassName()) {
 							AppSearchUtil.checkRegexRule(simpleRule.getClassName(), initialized, 
 									classDefs, classInvocations, userMethods, frameworkMethods);
 							initialized = true;
 						}
+						// Package name
 						if (simpleRule.hasPackageName()) {
 							AppSearchUtil.checkRegexRule(simpleRule.getPackageName(), initialized,
 									packageDefs, packageInvocations, userMethods, frameworkMethods);
@@ -344,16 +348,31 @@ public class AppSearch {
 						}
 						if (simpleRule.getArgTypesCount() > 0) {
 							// Not implemented
+							System.out.println("not implemented");
 						}
 						if (simpleRule.hasReturnType()) {
 							// Not implemented
+							System.out.println("not implemented");
 						}
 						if (simpleRule.getRawStringsCount() > 0) {
 							// Not implemented
+							System.out.println("not implemented");
+						}
+						// Permission string
+						boolean allPermissionsFound = true;
+						if (simpleRule.getPermissionsCount() > 0) {
+							allPermissionsFound = AppSearchUtil.checkRegexRuleList(simpleRule.getPermissionsList(),
+									appBuilder.getPermissionsList());
 						}
 						
-						if (userMethods.size() > 0 || frameworkMethods.size() > 0) regexRuleMatched = true;
-						else regexRuleMatched = false;
+						// set regexRuleMatched
+						if (initialized) {
+							if (userMethods.size() > 0 || frameworkMethods.size() > 0) regexRuleMatched &= true;
+							else regexRuleMatched &= false;
+								
+						}
+						if (allPermissionsFound) regexRuleMatched &= true;
+						else regexRuleMatched &= false;
 						if (simpleRule.getNegate()) regexRuleMatched = !regexRuleMatched;
 						simpleMatched &= regexRuleMatched;
 						
