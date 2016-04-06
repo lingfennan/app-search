@@ -1,0 +1,18 @@
+package gtisc.jobrunner;
+
+message AppSearchConfig {
+	optional string job_name = 1 [default="search"];
+	optional string apk_path = 2;
+	optional string apk_dir = 3;
+	optional string android_jar_dir_path = 4;
+	optional string force_android_jar_path = 5;
+	optional string config_path = 6;
+	optional string result_dir = 7;
+
+	// useless and debug
+	optional string soot_out_dir = 8;
+	optional bool console_print = 9;
+	optional bool binary_config = 10;
+	optional bool binary_output = 11;
+	optional bool keep_soot_output = 12;
+}

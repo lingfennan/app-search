@@ -1,0 +1,87 @@
+package gtisc.apiscanner;
+
+message RegexRule {
+  required string content = 1;
+  // If partialMatch is true, then for the content, we only check whether it is part of the target string
+  // o.w. we consider a match only when the two string exactly matches.
+  optional bool partial_match = 2 [default = false];
+}
+
+message SimpleRule {
+  optional string id = 1;
+  // a or ~a
+  optional bool negate = 2 [default = false];
+
+  // Check strings
+  optional RegexRule method_name_or_sub_signature = 3;
+  optional RegexRule method_signature = 4;
+  optional RegexRule class_name = 5;
+  optional RegexRule package_name = 6;
+
+  // Check types
+  repeated RegexRule arg_types = 7;
+  optional RegexRule return_type = 8;
+
+  // Raw string refer to any kind of strings that are used in the program.
+  // There may be multiple number of strings to match.
+  repeated RegexRule raw_strings = 9;
+}
+
+message ConjunctRule {
+  // The rule is expressed in conjuction of simple rules, which can either be expression or negate exp
+  optional string id = 1;
+  repeated SimpleRule simple_rules = 2;
+}
+
+message DisjunctRule {
+  // The Rule is expressed in disjunction of conjunctions, it is the user's
+  // responsibility to convert any check into this form.
+  optional string id = 1;
+  repeated ConjunctRule conjunct_rules = 2;
+  optional bool exhaust = 3 [default=false];
+}
+
+message ScannerRule {
+  required string name = 1;
+  // Each of the rule is expressed in form of (a ^ b) v (b ^ c) v (c ^ d) v ...
+  repeated DisjunctRule disjunct_rules = 2;
+}
+
+message ScannerConfig {
+  required string name = 1;
+  // The configuration can be specified from the program or files.
+  optional string config_filename = 2;
+  repeated ScannerRule rules = 3;
+}
+
+message MatchedRecord {
+  required string rule_name = 1;
+  // disjunct of conjunctions, i.e. we can have one disjunct id with multiple conjunction ids.
+  optional string disjunct_id = 2;
+  repeated string conjunct_ids= 3;
+}
+
+message Application {
+  required string digest = 1;
+  required string package_name = 2;
+  optional string source = 3;
+  // If title and icon data are available, this helps illustrate an app.
+  optional string app_title = 4;
+  optional string app_icon = 5;
+  optional string filepath = 6;
+  // General information.
+  optional string version_name = 7;
+  optional string main_activity = 8;
+  repeated string activities = 9;
+  repeated string services = 10;
+  repeated string providers = 11;
+  repeated string receivers = 12;
+  repeated string permissions = 13;
+  // Scanner results.
+  repeated MatchedRecord matches = 14;
+}
+
+message Result {
+  required ScannerConfig config = 1;
+  repeated Application apps = 2;
+}

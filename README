@@ -1,0 +1,18 @@
+A customizable app search tool!
+
+This tool allow users to define rules in form of disjunctions / conjunctions /
+negations. An example is: a v b v (c ^ d) v (f ^ ~e).
+
+
+HowTo
+1. Create configuration, used to learn configuration format in protocol buffer.
+java app-search.jar
+-apkDir /Users/ruian/Desktop/Android/app-search/data
+-resultDir /Users/ruian/Desktop/Android/app-search/data
+-job dumpConfig
+
+2. Search apps for candidates satisfying the specified configuration file.
+java app-search.jar
+-apkDir /Users/ruian/Desktop/Android/app-search/data
+-resultDir /Users/ruian/Desktop/Android/app-search/data
+-job search
