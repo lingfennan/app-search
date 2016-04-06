@@ -62,6 +62,7 @@ message MatchedRecord {
   // disjunct of conjunctions, i.e. we can have one disjunct id with multiple conjunction ids.
   optional string disjunct_id = 2;
   repeated string conjunct_ids= 3;
+  repeated string simple_ids = 4;
 }
 
 message Application {

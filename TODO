@@ -1,0 +1,4 @@
+0. Add unit tests to gurantee quality of code.
+1. Add args, return types, raw strings based check to the code base.
+2. Add intent based check to the code base. Especially system intent.
+3. Refactor the code to detect duplication of SimpleRules and reuse computed result.

@@ -393,7 +393,10 @@ public class AppSearch {
 					MatchedRecord.Builder mr = MatchedRecord.newBuilder();
 					mr.setRuleName(rule.getName());
 					mr.setDisjunctId(disjunct.getId());
-					for (ConjunctRule r : disjunct.getConjunctRulesList()) mr.addConjunctIds(r.getId());
+					for (ConjunctRule cr : disjunct.getConjunctRulesList()) {
+						mr.addConjunctIds(cr.getId());
+						for (SimpleRule sr : cr.getSimpleRulesList()) mr.addSimpleIds(sr.getId());
+					}
 					appBuilder.addMatches(mr.build());
 					
 					// Break if disjunct rule is satisfied and we don't perform exhaust search
