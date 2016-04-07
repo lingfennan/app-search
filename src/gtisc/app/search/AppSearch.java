@@ -231,25 +231,27 @@ public class AppSearch {
 							e.printStackTrace();
 							continue;
 						}
-						if (bodies.containsKey(targetMethod)) {
-							// Already analyzed.
-							continue;
-						}
+						// If the targetMethod is the method that we already marked in internalTransform,
+						// what should we do? (1) do the same, (2) or skip them. Performing (1) now.
 						methodInvocations.put(targetMethod.getSignature(), targetMethod);
 						
 						String subsig = targetMethod.getSubSignature();
 						String name = targetMethod.getName();
-						methodNameOrSubSigInvocations.putIfAbsent(subsig, new HashSet<SootMethod>());
+						if (!methodNameOrSubSigInvocations.containsKey(subsig))
+							methodNameOrSubSigInvocations.put(subsig, new HashSet<SootMethod>());
 						methodNameOrSubSigInvocations.get(subsig).add(targetMethod);
-						methodNameOrSubSigInvocations.putIfAbsent(name, new HashSet<SootMethod>());
+						if (!methodNameOrSubSigInvocations.containsKey(name))
+							methodNameOrSubSigInvocations.put(name, new HashSet<SootMethod>());
 						methodNameOrSubSigInvocations.get(name).add(targetMethod);
 
 						SootClass targetClass = targetMethod.getDeclaringClass();
 						String targetClassName = targetClass.getName();
 						String targetPackageName = targetClass.getPackageName();
-						classInvocations.putIfAbsent(targetClassName, new HashSet<SootMethod>());
+						if (!classInvocations.containsKey(targetClassName))
+							classInvocations.put(targetClassName, new HashSet<SootMethod>());
 						classInvocations.get(targetClassName).add(targetMethod);
-						packageInvocations.putIfAbsent(targetPackageName, new HashSet<SootMethod>());
+						if (!packageInvocations.containsKey(targetPackageName))
+							packageInvocations.put(targetPackageName, new HashSet<SootMethod>());
 						packageInvocations.get(targetPackageName).add(targetMethod);
 					}
 					// TODO (ruian): extract all primitive strings in expressions (assignments) 
@@ -301,8 +303,8 @@ public class AppSearch {
 			Map<String, SootMethod> methodDefs,
 			Map<String, Set<SootMethod>> methodNameOrSubSigDefs,
 			// Non-application classes, such as android.app.*, java.util.*.
+			Map<String, Set<SootMethod>> packageInvocations,			
 			Map<String, Set<SootMethod>> classInvocations,
-			Map<String, Set<SootMethod>> packageInvocations,
 			Map<String, SootMethod> methodInvocations,
 			Map<String, Set<SootMethod>> methodNameOrSubSigInvocations,
 			// Application.Builder, used to store the search results
@@ -320,7 +322,13 @@ public class AppSearch {
 						Set<SootMethod> userMethods = new HashSet<SootMethod>();
 						Set<SootMethod> frameworkMethods = new HashSet<SootMethod>();
 						boolean initialized = false;
-						
+
+						// Class name
+						if (simpleRule.hasClassName()) {
+							AppSearchUtil.checkRegexRule(simpleRule.getClassName(), initialized, 
+									classDefs, classInvocations, userMethods, frameworkMethods);							
+							initialized = true;
+						}
 						// Method name or SubSignature
 						if (simpleRule.hasMethodNameOrSubSignature()) {
 							AppSearchUtil.checkRegexRule(simpleRule.getMethodNameOrSubSignature(), initialized,
@@ -328,22 +336,16 @@ public class AppSearch {
 									userMethods, frameworkMethods);
 							initialized = true;
 						}
-						// Class name
-						if (simpleRule.hasClassName()) {
-							AppSearchUtil.checkRegexRule(simpleRule.getClassName(), initialized, 
-									classDefs, classInvocations, userMethods, frameworkMethods);
+						// Method Signature
+						if (simpleRule.hasMethodSignature()) {
+							AppSearchUtil.checkRegexRuleMethod(simpleRule.getMethodSignature(), initialized,
+									methodDefs, methodInvocations, userMethods, frameworkMethods);
 							initialized = true;
 						}
 						// Package name
 						if (simpleRule.hasPackageName()) {
 							AppSearchUtil.checkRegexRule(simpleRule.getPackageName(), initialized,
 									packageDefs, packageInvocations, userMethods, frameworkMethods);
-							initialized = true;
-						}
-						// Method Signature
-						if (simpleRule.hasMethodSignature()) {
-							AppSearchUtil.checkRegexRuleMethod(simpleRule.getMethodSignature(), initialized,
-									methodDefs, methodInvocations, userMethods, frameworkMethods);
 							initialized = true;
 						}
 						if (simpleRule.getArgTypesCount() > 0) {
@@ -369,14 +371,12 @@ public class AppSearch {
 						if (initialized) {
 							if (userMethods.size() > 0 || frameworkMethods.size() > 0) regexRuleMatched &= true;
 							else regexRuleMatched &= false;
-								
 						}
 						if (allPermissionsFound) regexRuleMatched &= true;
-						else regexRuleMatched &= false;
+						else regexRuleMatched &= false;						
 						if (simpleRule.getNegate()) regexRuleMatched = !regexRuleMatched;
 						simpleMatched &= regexRuleMatched;
-						
-						if (regexRuleMatched) {
+						if (regexRuleMatched && !simpleRule.getNegate()) {
 							// update appBuilder to log RegexRule information
 							System.out.println(userMethods);
 							System.out.println(frameworkMethods);
