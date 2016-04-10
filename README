@@ -7,12 +7,18 @@ negations. An example is: a v b v (c ^ d) v (f ^ ~e).
 HowTo
 1. Create configuration, used to learn configuration format in protocol buffer.
 java app-search.jar
--apkDir /Users/ruian/Desktop/Android/app-search/data
--resultDir /Users/ruian/Desktop/Android/app-search/data
 -job dumpConfig
+-apkDir $IN_DIR
+-resultDir $RESULT_DIR
+-configPath $CONFIG_DIR/ctl-and-comm.config
+-androidJarDir $PLATFORM_DIR
+-sootOutDir $SOOT_OUT_DIR
 
 2. Search apps for candidates satisfying the specified configuration file.
 java app-search.jar
--apkDir /Users/ruian/Desktop/Android/app-search/data
--resultDir /Users/ruian/Desktop/Android/app-search/data
 -job search
+-apkDir $IN_DIR
+-resultDir $RESULT_DIR
+-configPath $CONFIG_DIR/ctl-and-comm.config
+-androidJarDir $PLATFORM_DIR
+-sootOutDir $SOOT_OUT_DIR
