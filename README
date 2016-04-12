@@ -6,7 +6,7 @@ negations. An example is: a v b v (c ^ d) v (f ^ ~e).
 
 HowTo
 1. Create configuration, used to learn configuration format in protocol buffer.
-java app-search.jar
+java -jar app-search.jar
 -job dumpConfig
 -apkDir $IN_DIR
 -resultDir $RESULT_DIR
@@ -15,7 +15,7 @@ java app-search.jar
 -sootOutDir $SOOT_OUT_DIR
 
 2. Search apps for candidates satisfying the specified configuration file.
-java app-search.jar
+java -jar app-search.jar
 -job search
 -apkDir $IN_DIR
 -resultDir $RESULT_DIR
