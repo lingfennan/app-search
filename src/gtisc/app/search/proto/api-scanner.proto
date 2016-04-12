@@ -57,12 +57,34 @@ message ScannerConfig {
   repeated ScannerRule rules = 3;
 }
 
+message CallDescription {
+	required string method_name = 1;
+	required string class_name = 2;
+	required string package_name = 3;
+	repeated string arg_types = 4;
+	optional string return_type = 5;
+	optional string method_signature = 6;
+	optional bool is_java_library = 7;
+	optional bool is_application_class = 8;
+	optional bool is_static = 9;
+}
+
+message CallSite {
+	// If a method is only defined and not found to be called, only callee will be available
+	required CallDescription callee = 1;
+	repeated CallDescription caller = 2;
+	// Number of units, scanned so far
+	optional uint32 offset = 3;
+}
+
 message MatchedRecord {
+  // The matched record is per disjunct id, because each disjunct id causes the disjunct-based rule to evaluate to true
   required string rule_name = 1;
   // disjunct of conjunctions, i.e. we can have one disjunct id with multiple conjunction ids.
   optional string disjunct_id = 2;
   repeated string conjunct_ids= 3;
   repeated string simple_ids = 4;
+  repeated CallSite call_sites = 5;
 }
 
 message Application {

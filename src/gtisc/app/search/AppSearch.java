@@ -20,6 +20,8 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.TextFormat;
 
 import gtisc.apiscanner.ApiScanner.Application;
+import gtisc.apiscanner.ApiScanner.CallDescription;
+import gtisc.apiscanner.ApiScanner.CallSite;
 import gtisc.apiscanner.ApiScanner.ConjunctRule;
 import gtisc.apiscanner.ApiScanner.DisjunctRule;
 import gtisc.apiscanner.ApiScanner.MatchedRecord;
@@ -35,6 +37,7 @@ import soot.ResolutionFailedException;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
+import soot.Type;
 import soot.Unit;
 import soot.jimple.InvokeExpr;
 
@@ -109,9 +112,9 @@ public class AppSearch {
 		final ConcurrentHashMap<String, SootClass> appClasses = new ConcurrentHashMap<String, SootClass>();
 
 		// For methods implemented by user, i.e. application classes! 
-		// maps package name to the set of contained SootClasses
+		// maps package name to the set of contained SootMethods
 		final ConcurrentHashMap<String, Set<SootMethod>> packageDefs = new ConcurrentHashMap<String, Set<SootMethod>>();
-		// maps class name to SootClasses, and interfaces
+		// maps class name to SootMethods
 		final ConcurrentHashMap<String, Set<SootMethod>> classDefs = new ConcurrentHashMap<String, Set<SootMethod>>();
 		// maps method Signature to SootMethod
 		final ConcurrentHashMap<String, SootMethod> methodDefs = new ConcurrentHashMap<String, SootMethod>();
@@ -127,6 +130,8 @@ public class AppSearch {
 		Map<String, SootMethod> methodInvocations = new HashMap<String, SootMethod>();
 		// maps method name or SubSignature to method invocation unit and the caller SootMethod
 		Map<String, Set<SootMethod>> methodNameOrSubSigInvocations = new HashMap<String, Set<SootMethod>>();
+		// maps calling sites to callers
+		Map<SootMethod, Set<SootMethod>> callee2caller = new HashMap<SootMethod, Set<SootMethod>>();
 		
 		// TODO(Ruian): how to deal with raw strings? should and how can deal with arg types and return types?
 		// maps arg types or return types to method invocation unit and the caller SootMethod
@@ -157,6 +162,7 @@ public class AppSearch {
 				// collect methods
 				SootMethod bMethod = b.getMethod();
 				bodies.put(bMethod, b);
+				// TODO(ruian): move all the content out of internalTransform, so that we don't have the multi-processing issues.
 
 				// collect signature, subsig, method name
 				methodDefs.put(bMethod.getSignature(), bMethod);  // signature
@@ -232,9 +238,13 @@ public class AppSearch {
 							continue;
 						}
 						// If the targetMethod is the method that we already marked in internalTransform,
-						// what should we do? (1) do the same, (2) or skip them. Performing (1) now.
+						// we do the same as framework methods, i.e. we don't differentiate defined vs. not-defined methods here
 						methodInvocations.put(targetMethod.getSignature(), targetMethod);
+						if (!callee2caller.containsKey(targetMethod))
+							callee2caller.put(targetMethod, new HashSet<SootMethod>());
+						callee2caller.get(targetMethod).add(method);
 						
+						// methods
 						String subsig = targetMethod.getSubSignature();
 						String name = targetMethod.getName();
 						if (!methodNameOrSubSigInvocations.containsKey(subsig))
@@ -244,6 +254,7 @@ public class AppSearch {
 							methodNameOrSubSigInvocations.put(name, new HashSet<SootMethod>());
 						methodNameOrSubSigInvocations.get(name).add(targetMethod);
 
+						// classes, packages
 						SootClass targetClass = targetMethod.getDeclaringClass();
 						String targetClassName = targetClass.getName();
 						String targetPackageName = targetClass.getPackageName();
@@ -284,7 +295,7 @@ public class AppSearch {
 		// Match the rules
 		System.out.println("Matching the specified rules");
 		boolean found = mathcesRule(packageDefs, classDefs, methodDefs, methodNameOrSubSigDefs,
-				packageInvocations, classInvocations, methodInvocations, methodNameOrSubSigInvocations,
+				packageInvocations, classInvocations, methodInvocations, methodNameOrSubSigInvocations, callee2caller,
 				appBuilder);
 		
 		// Cleanup
@@ -307,6 +318,7 @@ public class AppSearch {
 			Map<String, Set<SootMethod>> classInvocations,
 			Map<String, SootMethod> methodInvocations,
 			Map<String, Set<SootMethod>> methodNameOrSubSigInvocations,
+			Map<SootMethod, Set<SootMethod>> callee2caller,
 			// Application.Builder, used to store the search results
 			Application.Builder appBuilder
 			) {
@@ -315,6 +327,9 @@ public class AppSearch {
 			boolean disjunctMatched = false;
 			for (DisjunctRule disjunct : rule.getDisjunctRulesList()) {
 				boolean conjunctMatched = true;
+
+				// The matched record is for each disjunct rule 
+				MatchedRecord.Builder mr = MatchedRecord.newBuilder();
 				for (ConjunctRule conjunct : disjunct.getConjunctRulesList()) {
 					boolean simpleMatched = true;
 					for (SimpleRule simpleRule : conjunct.getSimpleRulesList()) {
@@ -373,13 +388,26 @@ public class AppSearch {
 							else regexRuleMatched &= false;
 						}
 						if (allPermissionsFound) regexRuleMatched &= true;
-						else regexRuleMatched &= false;						
+						else regexRuleMatched &= false;
 						if (simpleRule.getNegate()) regexRuleMatched = !regexRuleMatched;
 						simpleMatched &= regexRuleMatched;
 						if (regexRuleMatched && !simpleRule.getNegate()) {
 							// update appBuilder to log RegexRule information
 							System.out.println(userMethods);
 							System.out.println(frameworkMethods);
+
+							// combine userMethods and frameworkMethods
+							userMethods.addAll(frameworkMethods);
+							for (SootMethod matchedMethod : userMethods) {
+								CallSite.Builder callSite = CallSite.newBuilder();
+								callSite.setCallee(AppSearchUtil.getCallDescription(matchedMethod));
+								if (callee2caller.containsKey(matchedMethod)) {
+									for (SootMethod caller: callee2caller.get(matchedMethod)) {
+										callSite.addCaller(AppSearchUtil.getCallDescription(caller));
+									}
+								}
+								mr.addCallSites(callSite.build());
+							}
 						}
 					}
 					conjunctMatched &= simpleMatched;
@@ -390,7 +418,6 @@ public class AppSearch {
 				}
 				disjunctMatched |= conjunctMatched;
 				if (disjunctMatched) {
-					MatchedRecord.Builder mr = MatchedRecord.newBuilder();
 					mr.setRuleName(rule.getName());
 					mr.setDisjunctId(disjunct.getId());
 					for (ConjunctRule cr : disjunct.getConjunctRulesList()) {

@@ -17,9 +17,12 @@ import javax.xml.bind.DatatypeConverter;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 
+import gtisc.apiscanner.ApiScanner.CallDescription;
 import gtisc.apiscanner.ApiScanner.RegexRule;
 import gtisc.apiscanner.ApiScanner.ScannerConfig;
+import soot.SootClass;
 import soot.SootMethod;
+import soot.Type;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.AssignStmt;
@@ -146,6 +149,24 @@ public class AppSearchUtil {
 			userMethods.addAll(tmpUserMethods);
 			frameworkMethods.addAll(tmpFrameworkMethods);
 		}
+	}
+	
+	public static CallDescription getCallDescription(SootMethod theMethod) {
+		CallDescription.Builder callDetail = CallDescription.newBuilder();
+
+		SootClass theClass = theMethod.getDeclaringClass();		
+		callDetail.setMethodName(theMethod.getName());
+		callDetail.setClassName(theClass.getName());
+		callDetail.setPackageName(theClass.getPackageName());
+		for (Type argType : theMethod.getParameterTypes()) {
+			callDetail.addArgTypes(argType.getEscapedName());
+		}
+		callDetail.setReturnType(theMethod.getReturnType().getEscapedName());
+		callDetail.setMethodSignature(theMethod.getSignature());
+		callDetail.setIsApplicationClass(theClass.isApplicationClass());
+		callDetail.setIsJavaLibrary(theClass.isJavaLibraryClass());
+		callDetail.setIsStatic(theClass.isStatic());
+		return callDetail.build();
 	}
 	
 	public static void saveMessage(Message msg, File msgFile, boolean binary) throws IOException {
