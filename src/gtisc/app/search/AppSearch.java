@@ -109,17 +109,17 @@ public class AppSearch {
 
 		// maps SootMethod to method bodies
 		final ConcurrentHashMap<SootMethod, Body> bodies = new ConcurrentHashMap<SootMethod, Body>();
-		final ConcurrentHashMap<String, SootClass> appClasses = new ConcurrentHashMap<String, SootClass>();
+		Map<String, SootClass> appClasses = new HashMap<String, SootClass>();
 
 		// For methods implemented by user, i.e. application classes! 
 		// maps package name to the set of contained SootMethods
-		final ConcurrentHashMap<String, Set<SootMethod>> packageDefs = new ConcurrentHashMap<String, Set<SootMethod>>();
+		Map<String, Set<SootMethod>> packageDefs = new HashMap<String, Set<SootMethod>>();
 		// maps class name to SootMethods
-		final ConcurrentHashMap<String, Set<SootMethod>> classDefs = new ConcurrentHashMap<String, Set<SootMethod>>();
+		Map<String, Set<SootMethod>> classDefs = new HashMap<String, Set<SootMethod>>();
 		// maps method Signature to SootMethod
-		final ConcurrentHashMap<String, SootMethod> methodDefs = new ConcurrentHashMap<String, SootMethod>();
+		Map<String, SootMethod> methodDefs = new HashMap<String, SootMethod>();
 		// maps method Name or SubSignature to SootMethods
-		final ConcurrentHashMap<String, Set<SootMethod>> methodNameOrSubSigDefs = new ConcurrentHashMap<String, Set<SootMethod>>(); 
+		Map<String, Set<SootMethod>> methodNameOrSubSigDefs = new HashMap<String, Set<SootMethod>>(); 
 
 		// For methods that's not analyzed yet, i.e. non-application classes!
 		// maps package name to the set of calling sites
@@ -142,64 +142,12 @@ public class AppSearch {
 		soot.options.Options.v().set_allow_phantom_refs(true);
 		soot.options.Options.v().set_whole_program(true);
 		
-		PackManager.v().getPack("jtp").add(new Transform("jtp.appSearch", new BodyTransformer() {
-
-			protected void addToSetValue(Map<String, Set<SootMethod>> entries, String key, SootMethod value) {
-			    Set<SootMethod> values = entries.get(key);
-			    if (values == null) {
-			        entries.putIfAbsent(key, Collections.synchronizedSet(new HashSet<SootMethod>()));
-			        // At this point, there will definitely be a list for the key.
-			        // We don't know or care which thread's new object is in there, so:
-			        values = entries.get(key);
-			    }
-			    values.add(value);
-			}
-			
+		PackManager.v().getPack("jtp").add(new Transform("jtp.appSearch", new BodyTransformer() {			
 			@Override
 			protected void internalTransform(Body b, String phaseName,
 					Map<String, String> options) {
-				
 				// collect methods
-				SootMethod bMethod = b.getMethod();
-				bodies.put(bMethod, b);
-				// TODO(ruian): move all the content out of internalTransform, so that we don't have the multi-processing issues.
-
-				// collect signature, subsig, method name
-				methodDefs.put(bMethod.getSignature(), bMethod);  // signature
-				String methodSubSig = bMethod.getSubSignature();  // subsig
-				addToSetValue(methodNameOrSubSigDefs, methodSubSig, bMethod);
-				String methodName = bMethod.getName();  // method name
-				addToSetValue(methodNameOrSubSigDefs, methodName, bMethod);
-				
-				// collect class
-				SootClass sootClass = bMethod.getDeclaringClass();
-				if (sootClass.isApplicationClass()) {
-					if (!appClasses.containsKey(sootClass.getName())) {
-						appClasses.put(sootClass.getName(), sootClass);
-					}
-					addToSetValue(classDefs, sootClass.getName(), bMethod);
-					addToSetValue(packageDefs, sootClass.getPackageName(), bMethod);
-				}
-				
-				// collect interfaces
-				List<SootClass> interfaceStack = Lists.newArrayList(sootClass.getInterfaces());
-				while (!interfaceStack.isEmpty()) {
-					SootClass topInterface = interfaceStack.remove(interfaceStack.size() - 1);
-					if (topInterface.isApplicationClass()) {
-						if(!appClasses.containsKey(topInterface.getName())) { 
-							appClasses.put(topInterface.getName(), topInterface);
-						}
-						addToSetValue(classDefs, topInterface.getName(), bMethod);
-						addToSetValue(packageDefs, topInterface.getPackageName(), bMethod);
-					}
-					
-					List<SootClass> tmpInterfaces = Lists.newArrayList(topInterface.getInterfaces());
-					for (SootClass tmpInterface : tmpInterfaces) {
-						if (!appClasses.containsValue(tmpInterface)) {
-							interfaceStack.add(tmpInterface);
-						}
-					}
-				}
+				bodies.put(b.getMethod(), b);
 			}
 		}));
 		
@@ -217,6 +165,63 @@ public class AppSearch {
 		};
 		soot.Main.main(sootArgs);
 		
+		
+		/* Definition related, moved out of internalTransform to avoid bugs introduced by multi-threading
+		 */
+		for (SootMethod bMethod: bodies.keySet()) {
+			// collect signature, subsig, method name
+			methodDefs.put(bMethod.getSignature(), bMethod);  // signature
+			String methodSubSig = bMethod.getSubSignature();  // subsig
+			if (!methodNameOrSubSigDefs.containsKey(methodSubSig))
+				methodNameOrSubSigDefs.put(methodSubSig, new HashSet<SootMethod>());
+			methodNameOrSubSigDefs.get(methodSubSig).add(bMethod);
+			String methodName = bMethod.getName();  // method name
+			if (!methodNameOrSubSigDefs.containsKey(methodName))
+				methodNameOrSubSigDefs.put(methodName, new HashSet<SootMethod>());
+			methodNameOrSubSigDefs.get(methodName).add(bMethod);
+			
+			// collect class
+			SootClass sootClass = bMethod.getDeclaringClass();
+			if (sootClass.isApplicationClass()) {
+				if (!appClasses.containsKey(sootClass.getName())) {
+					appClasses.put(sootClass.getName(), sootClass);
+				}
+				if (!classDefs.containsKey(sootClass.getName()))
+					classDefs.put(sootClass.getName(), new HashSet<SootMethod>());
+				classDefs.get(sootClass.getName()).add(bMethod);
+				if (!packageDefs.containsKey(sootClass.getPackageName()))
+					packageDefs.put(sootClass.getPackageName(), new HashSet<SootMethod>());
+				packageDefs.get(sootClass.getPackageName()).add(bMethod);
+			}
+			
+			// collect interfaces
+			List<SootClass> interfaceStack = Lists.newArrayList(sootClass.getInterfaces());
+			while (!interfaceStack.isEmpty()) {
+				SootClass topInterface = interfaceStack.remove(interfaceStack.size() - 1);
+				if (topInterface.isApplicationClass()) {
+					if(!appClasses.containsKey(topInterface.getName())) { 
+						appClasses.put(topInterface.getName(), topInterface);
+					}
+					if (!classDefs.containsKey(topInterface.getName()))
+						classDefs.put(topInterface.getName(), new HashSet<SootMethod>());
+					classDefs.get(topInterface.getName()).add(bMethod);
+					if (!packageDefs.containsKey(topInterface.getPackageName()))
+						packageDefs.put(topInterface.getPackageName(), new HashSet<SootMethod>());
+					packageDefs.get(topInterface.getPackageName()).add(bMethod);
+				}
+				
+				List<SootClass> tmpInterfaces = Lists.newArrayList(topInterface.getInterfaces());
+				for (SootClass tmpInterface : tmpInterfaces) {
+					if (!appClasses.containsValue(tmpInterface)) {
+						interfaceStack.add(tmpInterface);
+					}
+				}
+			}
+		}
+		
+		
+		/* Invocation related, these are information that is actually invoked
+		 */
 		// Classes
 		for (SootClass sootClass : appClasses.values()) {
 			List<SootMethod> methods = sootClass.getMethods();
