@@ -1,7 +1,9 @@
+syntax = "proto2";
+
 package gtisc.jobrunner;
 
 message AppSearchConfig {
-	optional string job_name = 1 [default="search"];
+	optional string job_name = 1;
 	optional string apk_path = 2;
 	optional string apk_dir = 3;
 	optional string android_jar_dir_path = 4;

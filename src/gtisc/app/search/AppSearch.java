@@ -408,7 +408,7 @@ public class AppSearch {
 								callSite.setCallee(AppSearchUtil.getCallDescription(matchedMethod));
 								if (callee2caller.containsKey(matchedMethod)) {
 									for (SootMethod caller: callee2caller.get(matchedMethod)) {
-										callSite.addCaller(AppSearchUtil.getCallDescription(caller));
+										callSite.addCallers(AppSearchUtil.getCallDescription(caller));
 									}
 								}
 								mr.addCallSites(callSite.build());

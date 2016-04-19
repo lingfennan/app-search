@@ -72,7 +72,7 @@ message CallDescription {
 message CallSite {
 	// If a method is only defined and not found to be called, only callee will be available
 	required CallDescription callee = 1;
-	repeated CallDescription caller = 2;
+	repeated CallDescription callers = 2;
 	// Number of units, scanned so far
 	optional uint32 offset = 3;
 }

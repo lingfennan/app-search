@@ -46,8 +46,8 @@ public class TestMathcesRule {
 			// Two call sites
 			assertEquals(2, app.getMatches(0).getCallSitesCount());
 			// both call sites have one callee, two callers
-			assertEquals(2, app.getMatches(0).getCallSites(0).getCallerCount());
-			assertEquals(2, app.getMatches(0).getCallSites(1).getCallerCount());
+			assertEquals(2, app.getMatches(0).getCallSites(0).getCallersCount());
+			assertEquals(2, app.getMatches(0).getCallSites(1).getCallersCount());
 		} catch (NoSuchAlgorithmException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
