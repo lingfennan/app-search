@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.TextFormat;
 
 import gtisc.apiscanner.ApiScanner.Application;
-import gtisc.apiscanner.ApiScanner.CallDescription;
 import gtisc.apiscanner.ApiScanner.CallSite;
 import gtisc.apiscanner.ApiScanner.ConjunctRule;
 import gtisc.apiscanner.ApiScanner.DisjunctRule;
@@ -37,7 +35,6 @@ import soot.ResolutionFailedException;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
-import soot.Type;
 import soot.Unit;
 import soot.jimple.InvokeExpr;
 
