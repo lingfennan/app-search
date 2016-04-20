@@ -15,17 +15,17 @@ import org.junit.Test;
 import gtisc.apiscanner.ApiScanner.Application;
 import gtisc.apiscanner.ApiScanner.MatchedRecord;
 import gtisc.app.search.AppSearch;
-import gtisc.jobrunner.JobRunner.AppSearchConfig;
+import gtisc.jobrunner.JobRunner.AppAnalysisConfig;
 
 public class TestMathcesRule {
-	AppSearchConfig.Builder configBuilder;
+	AppAnalysisConfig.Builder configBuilder;
 	AppSearch appSearch;
 	String dataDir = System.getProperty("user.dir") + File.separator + "data";
 	String platformDir = "/Users/ruian/Library/Android/sdk/platforms";
 
 	@Before
 	public void setUp() {
-		configBuilder = AppSearchConfig.newBuilder();
+		configBuilder = AppAnalysisConfig.newBuilder();
 		configBuilder.setJobName("search");
 		configBuilder.setSootOutDir(dataDir);
 		configBuilder.setResultDir(dataDir);
@@ -55,7 +55,7 @@ public class TestMathcesRule {
 	}
 	@Test
 	public void TestMatchesRulesPermissionsAndMethod() {
-		configBuilder.setApkPath(dataDir + File.separator + "com.fitbit.FitbitMobile-2182921.apk");
+		configBuilder.setApkPath(dataDir + File.separator + "com.fitbit.FitbitMobile-2142870.apk");
 		configBuilder.setConfigPath(dataDir + File.separator + "test-impl-using-fitbit.config");
 		appSearch = new AppSearch(configBuilder.build());
 		try {

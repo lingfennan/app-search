@@ -10,12 +10,12 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
 import gtisc.app.search.test.SampleConfigGen;
-import gtisc.jobrunner.JobRunner.AppSearchConfig;
+import gtisc.jobrunner.JobRunner.AppAnalysisConfig;
 
 
 public class AppSearchMain {
 	public static org.apache.commons.cli.Options options = null;
-	private static AppSearchConfig config = null;
+	private static AppAnalysisConfig config = null;
 	
 	private static void buildOptions() {
 		options = new org.apache.commons.cli.Options();
@@ -39,7 +39,7 @@ public class AppSearchMain {
 
 		CommandLineParser parser = new PosixParser();
 		CommandLine commandLine;
-		AppSearchConfig.Builder configBuilder = AppSearchConfig.newBuilder();
+		AppAnalysisConfig.Builder configBuilder = AppAnalysisConfig.newBuilder();
 
 		try {
 			commandLine = parser.parse(options, args);

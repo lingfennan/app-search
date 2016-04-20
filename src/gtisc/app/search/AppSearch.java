@@ -29,7 +29,7 @@ import gtisc.apiscanner.ApiScanner.Result;
 import gtisc.apiscanner.ApiScanner.ScannerConfig;
 import gtisc.apiscanner.ApiScanner.ScannerRule;
 import gtisc.apiscanner.ApiScanner.SimpleRule;
-import gtisc.jobrunner.JobRunner.AppSearchConfig;
+import gtisc.jobrunner.JobRunner.AppAnalysisConfig;
 import soot.Body;
 import soot.BodyTransformer;
 import soot.PackManager;
@@ -45,12 +45,12 @@ public class AppSearch {
 	// The matching rules
 	private ScannerConfig scannerConfig;
 	// The environment variables
-	private AppSearchConfig jobConfig;
+	private AppAnalysisConfig jobConfig;
 	private Result.Builder result;
 
-	public AppSearch(AppSearchConfig jobConfig) {
+	public AppSearch(AppAnalysisConfig jobConfig) {
 		// job config
-		this.jobConfig = AppSearchConfig.newBuilder().mergeFrom(jobConfig).build();
+		this.jobConfig = AppAnalysisConfig.newBuilder().mergeFrom(jobConfig).build();
 		// result
 		result = Result.newBuilder();
 		// scanner config
