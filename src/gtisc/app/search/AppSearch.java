@@ -149,7 +149,7 @@ public class AppSearch {
 		}));
 		
 		String fname = apkPath.getName();
-		String sootOutDir = jobConfig.getSootOutDir() + "/" + fname.split(AppSearchUtil.apkSuffix)[0];
+		String sootOutDir = jobConfig.getSootOutDir() + File.separator + fname.split(AppSearchUtil.apkSuffix)[0];
 		String[] sootArgs = new String[]{
 			"-android-jars",
 			jobConfig.getAndroidJarDirPath(),
