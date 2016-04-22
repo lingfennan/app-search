@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
 import android.widget.TextView;
@@ -17,8 +19,13 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
 
     TextView info, infoip, msg;
-    String message = "";
+    String message = "localhost";
     ServerSocket serverSocket;
+
+
+    private void doBindService() {
+        bindService(new Intent(MainActivity.this, SocketService.class), null, Context.BIND_AUTO_CREATE);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +37,13 @@ public class MainActivity extends Activity {
 
         infoip.setText(getIpAddress());
 
+        // Start socket server
         Thread socketServerThread = new Thread(new SocketServerThread());
         socketServerThread.start();
+
+        // Start service
+        startService(new Intent(this, SocketService.class));
+        doBindService();
     }
 
     @Override

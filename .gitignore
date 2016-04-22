@@ -1,3 +1,6 @@
 /src-gen/
 /bin/
 /data/
+*.class
+/test-apps/AndroidServerSocket/app/build
+/test-apps/AndroidServerSocket/build
