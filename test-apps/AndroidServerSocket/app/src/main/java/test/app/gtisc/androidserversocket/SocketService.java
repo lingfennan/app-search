@@ -1,9 +1,11 @@
 package test.app.gtisc.androidserversocket;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 import android.app.Service;
@@ -18,7 +20,7 @@ public class SocketService extends Service {
     public static final int SERVERPORT = 5000;
     private final IBinder myBinder = new LocalBinder();
     PrintWriter out;
-    Socket socket;
+    ServerSocket serverSocket;
     InetAddress serverAddr;
 
     @Override
@@ -65,40 +67,24 @@ public class SocketService extends Service {
 
     class connectSocket implements Runnable {
 
+        static final int SocketServerPORT = 7070;
+        int count = 0;
+
         @Override
         public void run() {
             try {
-                //here you must put your computer's IP address.
-                serverAddr = InetAddress.getByName(SERVERIP);
-                Log.e("TCP Client", "C: Connecting...");
-                //create a socket to make the connection with the server
-                socket = new Socket(serverAddr, SERVERPORT);
-
-                try {
-                    //send the message to the server
-                    out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
-                    Log.e("TCP Client", "C: Sent.");
-                    Log.e("TCP Client", "C: Done.");
+                serverSocket = new ServerSocket(SocketServerPORT);
+                String message = "";
+                while (true) {
+                    Socket socket = serverSocket.accept();
+                    count++;
+                    message += "#" + count + " from " + socket.getInetAddress()
+                            + ":" + socket.getPort() + "\n";
                 }
-                catch (Exception e) {
-                    Log.e("TCP", "S: Error", e);
-                }
-            } catch (Exception e) {
-                Log.e("TCP", "C: Error", e);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
         }
-
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        try {
-            socket.close();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        socket = null;
     }
 }

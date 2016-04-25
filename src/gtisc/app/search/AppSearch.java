@@ -135,7 +135,7 @@ public class AppSearch {
 		// multiple arg types are concatenated together to form a string, the arg types should be sorted to make it robust
 		// Map argsOrReturnInvocation = new HashMap<String, Pair<Unit, SootMethod>>();
 		soot.options.Options.v().set_src_prec(soot.options.Options.src_prec_apk);
-		soot.options.Options.v().set_output_format(soot.options.Options.output_format_J);
+		soot.options.Options.v().set_output_format(soot.options.Options.output_format_none);
 		soot.options.Options.v().set_allow_phantom_refs(true);
 		soot.options.Options.v().set_whole_program(true);
 		

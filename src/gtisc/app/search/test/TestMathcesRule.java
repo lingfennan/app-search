@@ -35,7 +35,7 @@ public class TestMathcesRule {
 	
 	@Test
 	public void TestMatchesRuleClassAndMethodAndCallSites() {
-		configBuilder.setApkPath(System.getProperty("user.dir") + File.separator + "test-apps/AndroidServerSocket/app/app-release.apk");
+		configBuilder.setApkPath(System.getProperty("user.dir") + File.separator + "test-apps/AndroidServerSocket/app/ServerSocket.apk");
 		configBuilder.setConfigPath(dataDir + File.separator + "test-impl-using-serversocket-demo.config");
 		appSearch = new AppSearch(configBuilder.build());
 		try {
@@ -45,9 +45,10 @@ public class TestMathcesRule {
 			assertEquals("tcp port serversocket", app.getMatches(0).getDisjunctId());
 			// Two call sites
 			assertEquals(2, app.getMatches(0).getCallSitesCount());
-			// both call sites have one callee, two callers
-			assertEquals(2, app.getMatches(0).getCallSites(0).getCallersCount());
-			assertEquals(2, app.getMatches(0).getCallSites(1).getCallersCount());
+			// both call sites have one callee, three callers
+			// call site: ServerSocket-><init>, ServerSocket->accept
+			assertEquals(3, app.getMatches(0).getCallSites(0).getCallersCount());
+			assertEquals(3, app.getMatches(0).getCallSites(1).getCallersCount());
 		} catch (NoSuchAlgorithmException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
