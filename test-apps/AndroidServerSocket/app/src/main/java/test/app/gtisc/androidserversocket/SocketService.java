@@ -41,6 +41,8 @@ public class SocketService extends Service {
     public void onCreate() {
         super.onCreate();
         System.out.println("I am in on create");
+        // Test type casting
+        new Thread( (Runnable) new connectSocket() ).start();
     }
 
     public void IsBoundable(){
