@@ -15,7 +15,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-public class SocketService extends Service {
+public class SocketService extends Service implements Runnable {
     public static final String SERVERIP = "localhost"; //your computer IP address should be written here
     public static final int SERVERPORT = 5000;
     private final IBinder myBinder = new LocalBinder();
@@ -41,8 +41,12 @@ public class SocketService extends Service {
     public void onCreate() {
         super.onCreate();
         System.out.println("I am in on create");
+
         // Test type casting
         new Thread( (Runnable) new connectSocket() ).start();
+
+        // Test identity statement
+        new Thread( (Runnable) this).start();
     }
 
     public void IsBoundable(){
@@ -55,6 +59,12 @@ public class SocketService extends Service {
             out.println(message);
             out.flush();
         }
+    }
+
+    public void run() {
+        // Test whether there is bug using identity statement
+        Runnable connect = new connectSocket();
+        new Thread(connect).start();
     }
 
     @Override
