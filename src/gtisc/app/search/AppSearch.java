@@ -418,8 +418,8 @@ public class AppSearch {
 						// update appBuilder to log SimpleRule information
 					}
 				}
-				disjunctMatched |= conjunctMatched;
-				if (disjunctMatched) {
+				// Each disjunct rule
+				if (conjunctMatched) {
 					mr.setRuleName(rule.getName());
 					mr.setDisjunctId(disjunct.getId());
 					for (ConjunctRule cr : disjunct.getConjunctRulesList()) {
@@ -427,11 +427,12 @@ public class AppSearch {
 						for (SimpleRule sr : cr.getSimpleRulesList()) mr.addSimpleIds(sr.getId());
 					}
 					appBuilder.addMatches(mr.build());
-					
-					// Break if disjunct rule is satisfied and we don't perform exhaust search
-					// If exhaust is true, then evaluate all the disjunct rules
-					if (!disjunct.getExhaust()) break;
 				}
+				// Update disjunct matched
+				disjunctMatched |= conjunctMatched;
+				// Break if disjunct rule is satisfied and we don't perform exhaust search
+				// If exhaust is true, then evaluate all the disjunct rules.				
+				if (disjunctMatched && !disjunct.getExhaust()) break;
 			}
 			someRuleMatched |= disjunctMatched; 
 		}

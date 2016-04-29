@@ -114,6 +114,8 @@ public class AppSearchUtil {
 			userMethods.addAll(tmpUserMethods);
 			frameworkMethods.addAll(tmpFrameworkMethods);
 		}
+		System.out.println(userMethods);
+		System.out.println(frameworkMethods);
 	}
 	
 	public static void checkRegexRuleMethod(RegexRule rule, boolean initialized,
