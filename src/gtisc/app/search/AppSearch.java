@@ -97,7 +97,7 @@ public class AppSearch {
 			resultFile = new File(jobConfig.getResultDir(), folder.getName() + AppSearchUtil.resultSuffix);
 		}
 		if (resultFile != null) {
-			AppSearchUtil.saveMessage(result.build(), resultFile, jobConfig.getBinaryOutput());
+			ProtoBufferUtil.saveMessage(result.build(), resultFile, jobConfig.getBinaryOutput());
 		}
 	}
 

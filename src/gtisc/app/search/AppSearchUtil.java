@@ -1,8 +1,6 @@
 package gtisc.app.search;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -13,9 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
-
-import com.google.protobuf.Message;
-import com.google.protobuf.TextFormat;
 
 import gtisc.apiscanner.ApiScanner.CallDescription;
 import gtisc.apiscanner.ApiScanner.RegexRule;
@@ -171,19 +166,6 @@ public class AppSearchUtil {
 		return callDetail.build();
 	}
 	
-	public static void saveMessage(Message msg, File msgFile, boolean binary) throws IOException {
-		if (binary) {
-			FileOutputStream fileOutputStream;
-			fileOutputStream = new FileOutputStream(msgFile);
-			msg.writeTo(fileOutputStream);
-			fileOutputStream.close();
-		} else {
-			FileWriter fileWriter = new FileWriter(msgFile);
-			TextFormat.print(msg, fileWriter);
-			fileWriter.close();
-		}
-	}
-	
 	public static String getDigest(File fin, String alg) throws IOException, NoSuchAlgorithmException {
 		// Returns the digest of file fin in lower case
 		MessageDigest module = MessageDigest.getInstance(alg);
@@ -199,7 +181,7 @@ public class AppSearchUtil {
 		
 		System.out.println("saving config to " + path.getAbsolutePath());
 		try {
-			AppSearchUtil.saveMessage(sc, path, binary);
+			ProtoBufferUtil.saveMessage(sc, path, binary);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
