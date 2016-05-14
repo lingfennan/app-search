@@ -4,9 +4,12 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import android.app.Service;
 import android.content.Intent;
@@ -47,6 +50,13 @@ public class SocketService extends Service implements Runnable {
 
         // Test identity statement
         new Thread( (Runnable) this).start();
+
+        // Test security package usage (not matching)
+        try {
+            getMD5String("I shouldn't exist in impact analysis");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
     }
 
     public void IsBoundable(){
@@ -62,9 +72,15 @@ public class SocketService extends Service implements Runnable {
     }
 
     public void run() {
-        // Test whether there is bug using identity statement
         Runnable connect = new connectSocket();
         new Thread(connect).start();
+
+        // Test security package usage (matching)
+        try {
+            getMD5String("I should exist in impact analysis");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -98,5 +114,19 @@ public class SocketService extends Service implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static String getMD5String(String plaintext) throws NoSuchAlgorithmException {
+        MessageDigest m = MessageDigest.getInstance("MD5");
+        m.reset();
+        m.update(plaintext.getBytes());
+        byte[] digest = m.digest();
+        BigInteger bigInt = new BigInteger(1,digest);
+        String hashText = bigInt.toString(16);
+        // Now we need to zero pad it if you actually want the full 32 chars.
+        while(hashText.length() < 32 ){
+            hashText = "0"+hashText;
+        }
+        return hashText;
     }
 }
