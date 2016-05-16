@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="test.app.gtisc.androidserversocket"
-    android:versionCode="2"
-    android:versionName="Add security package usage">
+    android:versionCode="3"
+    android:versionName="Add pii flow to socket">
 
     <uses-permission android:name="android.permission.INTERNET" />
 

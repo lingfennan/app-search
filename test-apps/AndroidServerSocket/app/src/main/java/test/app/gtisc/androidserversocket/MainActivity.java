@@ -14,12 +14,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
+import android.telephony.TelephonyManager;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
     TextView info, infoip, msg;
     String message = "localhost";
+    String piiPhoneNumber = "";
     ServerSocket serverSocket;
 
 
@@ -36,6 +38,9 @@ public class MainActivity extends Activity {
         msg = (TextView) findViewById(R.id.msg);
 
         infoip.setText(getIpAddress());
+        // Set Phone Number
+        piiPhoneNumber = ((TelephonyManager) getSystemService(
+                Context.TELEPHONY_SERVICE)).getLine1Number();
 
         // Start socket server
         Thread socketServerThread = new Thread(new SocketServerThread());
@@ -119,6 +124,7 @@ public class MainActivity extends Activity {
         public void run() {
             OutputStream outputStream;
             String msgReply = "Hello from Android, you are #" + cnt;
+            msgReply += piiPhoneNumber;
 
             try {
                 outputStream = hostThreadSocket.getOutputStream();
