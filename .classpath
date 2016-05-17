@@ -3,6 +3,12 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="src-gen"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/user-libs"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/axml-2.0.jar"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/commons-cli-1.3.1.jar"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/commons-collections4-4.1.jar"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/junit-4.10.jar"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/protobuf-java-2.6.1.jar"/>
+	<classpathentry kind="lib" path="/data/Desktop/port-backdoor/third-party/app-search/libs/soot-trunk.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

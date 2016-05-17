@@ -192,4 +192,17 @@ public class AppSearchUtil {
 		sb.setConfigFilename(path.getAbsolutePath());
 		saveConfig(resultDir, binary, sb.build());
 	}
+	
+	public static String getPlatformDir() {
+		// Set platformDir accordingly
+		String OS = System.getProperty("os.name").toLowerCase();
+		if (OS.indexOf("win") >= 0) 
+			return "Unknown";
+		else if (OS.indexOf("mac") >= 0)
+			return "/Users/ruian/Library/Android/sdk/platforms/";
+		else if (OS.indexOf("linux") >= 0)
+			return "/data/Desktop/Android-Sdk/platforms/";
+		else
+			return "";
+	}
 }

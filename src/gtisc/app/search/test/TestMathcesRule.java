@@ -15,13 +15,14 @@ import org.junit.Test;
 import gtisc.apiscanner.ApiScanner.Application;
 import gtisc.apiscanner.ApiScanner.MatchedRecord;
 import gtisc.app.search.AppSearch;
+import gtisc.app.search.AppSearchUtil;
 import gtisc.jobrunner.JobRunner.AppAnalysisConfig;
 
 public class TestMathcesRule {
 	AppAnalysisConfig.Builder configBuilder;
 	AppSearch appSearch;
 	String dataDir = System.getProperty("user.dir") + File.separator + "data";
-	String platformDir = "/Users/ruian/Library/Android/sdk/platforms";
+	String platformDir = AppSearchUtil.getPlatformDir();
 
 	@Before
 	public void setUp() {
@@ -35,7 +36,7 @@ public class TestMathcesRule {
 	
 	@Test
 	public void TestMatchesRuleClassAndMethodAndCallSites() {
-		configBuilder.setApkPath(System.getProperty("user.dir") + File.separator + "test-apps/AndroidServerSocket/app/ServerSocket.apk");
+		configBuilder.setApkPath(System.getProperty("user.dir") + File.separator + "test-apps/AndroidServerSocket/app/ServerSocket.v1.apk");
 		configBuilder.setConfigPath(dataDir + File.separator + "test-impl-using-serversocket-demo.config");
 		appSearch = new AppSearch(configBuilder.build());
 		try {
