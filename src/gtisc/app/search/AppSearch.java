@@ -302,7 +302,6 @@ public class AppSearch {
 		
 		// Cleanup
 		soot.G.reset();
-		if (!jobConfig.getKeepSootOutput()) FileUtils.deleteDirectory(new File(sootOutDir));
 		if (!found) return null;
 		
 		System.out.println("Found match for app: " + apkPath.getName());
