@@ -1,5 +1,5 @@
 Bluetooth:
-Permission
+- Permission
 	android.permission.BLUETOOTH_ADMIN
 		Allows applications to discover and pair bluetooth devices
 	android.permission.BLUETOOTH
@@ -9,7 +9,7 @@ Permission
 		allow or disallow phonebook access or message access. This is not available to
 		third party applications.
 
-Methods
+- Methods
 	android.bluetooth.BluetoothAdapter
 		getBondedDevices
 		startDiscovery
@@ -22,12 +22,12 @@ Methods
 
 
 Socket:
-ssl server socket: http://www.programcreek.com/java-api-examples/javax.net.ssl.SSLSocketFactory
-http://stilius.net/java/java_ssl.php
-Permission
+[ssl server socket](http://www.programcreek.com/java-api-examples/javax.net.ssl.SSLSocketFactory)
+[java ssl](http://stilius.net/java/java_ssl.php)
+- Permission
 	android.permission.INTERNET
 
-Methods
+- Methods
 	java.net.InetSocketAddress
 		<init>
 	java.net.ServerSocket
@@ -40,9 +40,22 @@ Methods
 		<init>
 		accept
 
+[java.nio socket](http://tutorials.jenkov.com/java-nio/server-socket-channel.html)
+[There is no SSLServerSocketChannel](http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#SSLENG)
+- Permission
+    android.permission.INTERNET
+
+- Methods
+    java.nio.channels.ServerSocketChannel
+        <init>
+        accept
+    java.nio.channels.DatagramChannel
+        <init>
+        receive
+
 
 NFC: host-based card emulation. This allows any Android application to emulate a card and talk directly to the NFC reader
-Permission
+- Permission
 	android.permission.NFC
 		Allows applications to perform I/O operations over NFC.
 	android.permission.BIND_NFC_SERVICE
@@ -50,7 +63,7 @@ Permission
 		the system can bind to it.
 		Protection level: signature
 
-Methods
+- Methods
 	NdefRecord
 		<init>
 	android.nfc.NfcAdapter
@@ -61,14 +74,13 @@ Methods
 	OffHostApduService
 
 
-Wifi P2P:
-http://developer.android.com/intl/zh-cn/guide/topics/connectivity/wifip2p.html
-Permission
+[Wifi P2P](http://developer.android.com/intl/zh-cn/guide/topics/connectivity/wifip2p.html)
+- Permission
 	android.permission.ACCESS_WIFI_STATE
 	android.permission.CHANGE_WIFI_STATE
 	android.permission.INTERNET
 
-Methods
+- Methods
 	android.net.wifi.p2p.WifiP2pManager
 		initialize
 		discoverPeers or discoverServices
