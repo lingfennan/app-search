@@ -55,6 +55,7 @@ public class TestMathcesRule {
 			e.printStackTrace();
 		}
 	}
+	
 	@Test
 	public void TestMatchesRulesPermissionsAndMethod() {
 		configBuilder.setApkPath(dataDir + File.separator + "com.fitbit.FitbitMobile-2142870.apk");
@@ -71,6 +72,34 @@ public class TestMathcesRule {
 				matchedRules.add(r.getRuleName());
 			}
 			assertEquals(expectedRules, matchedRules);
+		} catch (NoSuchAlgorithmException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void TestMatchesRuleMultipleDex() {
+		configBuilder.setApkPath(dataDir + File.separator + "安卓市场6.0.86.apk");
+		configBuilder.setConfigPath(dataDir + File.separator + "sock-server-client.config");
+		appSearch = new AppSearch(configBuilder.build());
+		try {
+			Application app = appSearch.processAPK(new File(configBuilder.getApkPath()));
+			assertEquals(4, app.getMatchesCount());
+			Set<String> expectedRules = new HashSet<String>(Arrays.asList(
+					new String[]{"socket communication"}));
+			Set<String> expectedDisjunctIds = new HashSet<String>(Arrays.asList(new String[] {
+				"tcp server accept", "tcp server accept and connect", "tcp server accept and http open connection",
+				"tcp server accept and http open input stream"
+			}));
+			Set<String> matchedRules = new HashSet<String>();
+			Set<String> matchedDisjunctIds = new HashSet<String>();
+			for (MatchedRecord r: app.getMatchesList()) {
+				matchedRules.add(r.getRuleName());
+				matchedDisjunctIds.add(r.getDisjunctId());
+			}
+			assertEquals(expectedRules, matchedRules);
+			assertEquals(expectedDisjunctIds, matchedDisjunctIds);
 		} catch (NoSuchAlgorithmException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

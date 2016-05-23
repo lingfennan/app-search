@@ -32,6 +32,7 @@ import soot.Body;
 import soot.BodyTransformer;
 import soot.PackManager;
 import soot.ResolutionFailedException;
+import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
@@ -43,13 +44,10 @@ public class AppSearch {
 	private ScannerConfig scannerConfig;
 	// The environment variables
 	private AppAnalysisConfig jobConfig;
-	private Result.Builder result;
 
 	public AppSearch(AppAnalysisConfig jobConfig) {
 		// job config
 		this.jobConfig = AppAnalysisConfig.newBuilder().mergeFrom(jobConfig).build();
-		// result
-		result = Result.newBuilder();
 		// scanner config
 		if (jobConfig.hasConfigPath()) {
 			try {
@@ -103,10 +101,9 @@ public class AppSearch {
 
 	public Application processAPK(File apkPath) throws NoSuchAlgorithmException, IOException {
 		System.out.println("Trying to process: " + apkPath.getName());
-
+		
 		// maps SootMethod to method bodies
 		final ConcurrentHashMap<SootMethod, Body> bodies = new ConcurrentHashMap<SootMethod, Body>();
-		Map<String, SootClass> appClasses = new HashMap<String, SootClass>();
 
 		// For methods implemented by user, i.e. application classes! 
 		// maps package name to the set of contained SootMethods
@@ -138,11 +135,11 @@ public class AppSearch {
 		soot.options.Options.v().set_output_format(soot.options.Options.output_format_none);
 		soot.options.Options.v().set_allow_phantom_refs(true);
 		soot.options.Options.v().set_whole_program(true);
+		soot.options.Options.v().set_process_multiple_dex(true);
 		
-		PackManager.v().getPack("jtp").add(new Transform("jtp.appSearch", new BodyTransformer() {			
+		PackManager.v().getPack("jtp").add(new Transform("jtp.appSearch", new BodyTransformer() {
 			@Override
-			protected void internalTransform(Body b, String phaseName,
-					Map<String, String> options) {
+			protected void internalTransform(Body b, String phaseName, Map<String, String> options) {
 				// collect methods
 				bodies.put(b.getMethod(), b);
 			}
@@ -163,70 +160,74 @@ public class AppSearch {
 		soot.Main.main(sootArgs);
 		
 		
-		/* Definition related, moved out of internalTransform to avoid bugs introduced by multi-threading
-		 */
-		for (SootMethod bMethod: bodies.keySet()) {
-			// collect signature, subsig, method name
-			methodDefs.put(bMethod.getSignature(), bMethod);  // signature
-			String methodSubSig = bMethod.getSubSignature();  // subsig
-			if (!methodNameOrSubSigDefs.containsKey(methodSubSig))
-				methodNameOrSubSigDefs.put(methodSubSig, new HashSet<SootMethod>());
-			methodNameOrSubSigDefs.get(methodSubSig).add(bMethod);
-			String methodName = bMethod.getName();  // method name
-			if (!methodNameOrSubSigDefs.containsKey(methodName))
-				methodNameOrSubSigDefs.put(methodName, new HashSet<SootMethod>());
-			methodNameOrSubSigDefs.get(methodName).add(bMethod);
-			
-			// collect class
-			SootClass sootClass = bMethod.getDeclaringClass();
-			if (sootClass.isApplicationClass()) {
-				if (!appClasses.containsKey(sootClass.getName())) {
-					appClasses.put(sootClass.getName(), sootClass);
-				}
-				if (!classDefs.containsKey(sootClass.getName()))
-					classDefs.put(sootClass.getName(), new HashSet<SootMethod>());
-				classDefs.get(sootClass.getName()).add(bMethod);
-				if (!packageDefs.containsKey(sootClass.getPackageName()))
-					packageDefs.put(sootClass.getPackageName(), new HashSet<SootMethod>());
-				packageDefs.get(sootClass.getPackageName()).add(bMethod);
-			}
-			
-			// collect interfaces
-			List<SootClass> interfaceStack = Lists.newArrayList(sootClass.getInterfaces());
-			while (!interfaceStack.isEmpty()) {
-				SootClass topInterface = interfaceStack.remove(interfaceStack.size() - 1);
-				if (topInterface.isApplicationClass()) {
-					if(!appClasses.containsKey(topInterface.getName())) { 
-						appClasses.put(topInterface.getName(), topInterface);
-					}
-					if (!classDefs.containsKey(topInterface.getName()))
-						classDefs.put(topInterface.getName(), new HashSet<SootMethod>());
-					classDefs.get(topInterface.getName()).add(bMethod);
-					if (!packageDefs.containsKey(topInterface.getPackageName()))
-						packageDefs.put(topInterface.getPackageName(), new HashSet<SootMethod>());
-					packageDefs.get(topInterface.getPackageName()).add(bMethod);
-				}
-				
-				List<SootClass> tmpInterfaces = Lists.newArrayList(topInterface.getInterfaces());
-				for (SootClass tmpInterface : tmpInterfaces) {
-					if (!appClasses.containsValue(tmpInterface)) {
-						interfaceStack.add(tmpInterface);
-					}
-				}
-			}
-		}
-		
-		
 		/* Invocation related, these are information that is actually invoked
 		 */
 		// Classes
-		for (SootClass sootClass : appClasses.values()) {
+		for (SootClass sootClass : Scene.v().getClasses()) {
 			List<SootMethod> methods = sootClass.getMethods();
-			for (SootMethod method : methods) {		
-				Body body = bodies.get(method);
+			for (SootMethod sootMethod : methods) {
+
+				/* Definitions. For methods implemented by user, i.e. application classes! */
+				if (sootClass.isApplicationClass()) {
+					// collect signature, subsig, method name
+					methodDefs.put(sootMethod.getSignature(), sootMethod);  // signature
+					String methodSubSig = sootMethod.getSubSignature();  // subsig
+					if (!methodNameOrSubSigDefs.containsKey(methodSubSig))
+						methodNameOrSubSigDefs.put(methodSubSig, new HashSet<SootMethod>());
+					methodNameOrSubSigDefs.get(methodSubSig).add(sootMethod);
+					String methodName = sootMethod.getName();  // method name
+					if (!methodNameOrSubSigDefs.containsKey(methodName))
+						methodNameOrSubSigDefs.put(methodName, new HashSet<SootMethod>());
+					methodNameOrSubSigDefs.get(methodName).add(sootMethod);
+									
+					// collect class
+					if (sootClass.isApplicationClass()) {
+						if (!classDefs.containsKey(sootClass.getName()))
+							classDefs.put(sootClass.getName(), new HashSet<SootMethod>());
+						classDefs.get(sootClass.getName()).add(sootMethod);
+						if (!packageDefs.containsKey(sootClass.getPackageName()))
+							packageDefs.put(sootClass.getPackageName(), new HashSet<SootMethod>());
+						packageDefs.get(sootClass.getPackageName()).add(sootMethod);
+					}
+					
+					// collect interfaces
+					List<SootClass> interfaceStack = Lists.newArrayList(sootClass.getInterfaces());
+					while (!interfaceStack.isEmpty()) {
+						SootClass topInterface = interfaceStack.remove(interfaceStack.size() - 1);
+						if (topInterface.isApplicationClass()) {
+							if (!classDefs.containsKey(topInterface.getName()))
+								classDefs.put(topInterface.getName(), new HashSet<SootMethod>());
+							classDefs.get(topInterface.getName()).add(sootMethod);
+							if (!packageDefs.containsKey(topInterface.getPackageName()))
+								packageDefs.put(topInterface.getPackageName(), new HashSet<SootMethod>());
+							packageDefs.get(topInterface.getPackageName()).add(sootMethod);
+						}
+						
+						List<SootClass> tmpInterfaces = Lists.newArrayList(topInterface.getInterfaces());
+						for (SootClass tmpInterface : tmpInterfaces) {
+							if (!classDefs.containsKey(tmpInterface.getName())) {
+								interfaceStack.add(tmpInterface);
+							}
+						}
+					}
+				}
+				
+				/* Invocation related, these are information that is actually invoked */
+				Body body = null;
+				if (bodies.containsKey(sootMethod)) body = bodies.get(sootMethod);
+				else { 
+					try {
+						if (sootMethod.hasActiveBody() || sootMethod.getSource() != null)
+							body = sootMethod.retrieveActiveBody();
+					} catch (Exception e) {
+						// Some method doesn't have active body, nor method source
+						if (jobConfig.getConsolePrint()) e.printStackTrace();
+					}
+				}
 				if (body == null) {
 					continue;
 				}
+				
 				for (Unit unit : body.getUnits()) {
 					InvokeExpr invokeExpr = AppSearchUtil.getInvokeExpr(unit);
 				
@@ -244,7 +245,7 @@ public class AppSearch {
 						methodInvocations.put(targetMethod.getSignature(), targetMethod);
 						if (!callee2caller.containsKey(targetMethod))
 							callee2caller.put(targetMethod, new HashSet<SootMethod>());
-						callee2caller.get(targetMethod).add(method);
+						callee2caller.get(targetMethod).add(sootMethod);
 						
 						// methods
 						String subsig = targetMethod.getSubSignature();
@@ -272,7 +273,7 @@ public class AppSearch {
 				}
 			}
 		}
-		
+
 		// add misc information, parse AndroidManifest.xml, set Activity, Service, Receiver, Provider, Permissions
 		System.out.println("Parsing the AndroidManifest.xml to get more information");
 		Application.Builder appBuilder = Application.newBuilder();
@@ -394,6 +395,7 @@ public class AppSearch {
 						simpleMatched &= regexRuleMatched;
 						if (regexRuleMatched && !simpleRule.getNegate()) {
 							// update appBuilder to log RegexRule information
+							System.out.println("Conjunct Rule: " + conjunct.getId() + "\n\tSimple Rule: " + simpleRule.getId());
 							System.out.println(userMethods);
 							System.out.println(frameworkMethods);
 

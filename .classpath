@@ -9,6 +9,7 @@
 	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
 	<classpathentry kind="lib" path="libs/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="libs/protobuf-java-2.6.1.jar"/>
-	<classpathentry kind="lib" path="libs/soot-trunk.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/soot"/>
+	<classpathentry kind="lib" path="libs/AXMLPrinter2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
