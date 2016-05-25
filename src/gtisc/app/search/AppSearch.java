@@ -283,7 +283,16 @@ public class AppSearch {
 		try {
 			processManifest = new ProcessManifest(apkPath);
 			appBuilder.setPackageName(processManifest.getPackageName());
-			appBuilder.setVersionName(processManifest.getVersionName());
+			String versionName = "";
+			try {
+				versionName = processManifest.getVersionName();
+				
+			} catch (Exception e) {
+				// If the version name is not properly parsed, simply set it to null.
+				// versionName = Integer.toString(processManifest.getVersionCode());
+				e.printStackTrace();
+			}
+			appBuilder.setVersionName(versionName);
 			appBuilder.addAllActivities(processManifest.getActivityNames());
 			appBuilder.addAllServices(processManifest.getServiceNames());
 			appBuilder.addAllReceivers(processManifest.getReceiverNames());
