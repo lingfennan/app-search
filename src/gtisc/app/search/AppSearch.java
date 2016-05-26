@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.io.FileUtils;
 import org.xmlpull.v1.XmlPullParserException;
 
 import com.google.common.collect.Lists;
@@ -215,15 +214,6 @@ public class AppSearch {
 				/* Invocation related, these are information that is actually invoked */
 				Body body = null;
 				if (bodies.containsKey(sootMethod)) body = bodies.get(sootMethod);
-				else { 
-					try {
-						if (sootMethod.hasActiveBody() || sootMethod.getSource() != null)
-							body = sootMethod.retrieveActiveBody();
-					} catch (Exception e) {
-						// Some method doesn't have active body, nor method source
-						if (jobConfig.getConsolePrint()) e.printStackTrace();
-					}
-				}
 				if (body == null) {
 					continue;
 				}

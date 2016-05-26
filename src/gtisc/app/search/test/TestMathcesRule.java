@@ -85,12 +85,15 @@ public class TestMathcesRule {
 		appSearch = new AppSearch(configBuilder.build());
 		try {
 			Application app = appSearch.processAPK(new File(configBuilder.getApkPath()));
-			assertEquals(4, app.getMatchesCount());
+			assertEquals(5, app.getMatchesCount());
 			Set<String> expectedRules = new HashSet<String>(Arrays.asList(
 					new String[]{"socket communication"}));
 			Set<String> expectedDisjunctIds = new HashSet<String>(Arrays.asList(new String[] {
-				"tcp server accept", "tcp server accept and connect", "tcp server accept and http open connection",
-				"tcp server accept and http open input stream"
+				"tcp server accept",  // 2 callers 
+				"nio tcp server accept",  // 2 callers 
+				"tcp server accept and connect",  // accept 2 callers, connect 2 callers
+				"tcp server accept and http open connection",  // accept 2 callers, openconnection 12 callers and 4 callers
+				"tcp server accept and http open input stream"  // accept 2 callers, input stream 3 callers
 			}));
 			Set<String> matchedRules = new HashSet<String>();
 			Set<String> matchedDisjunctIds = new HashSet<String>();
