@@ -108,4 +108,36 @@ public class TestMathcesRule {
 			e.printStackTrace();
 		}
 	}
+	
+	@Test
+	public void TestMatchesRuleArgsReturn() {
+		configBuilder.setApkPath(System.getProperty("user.dir") + File.separator + "test-apps/AndroidServerSocket/app/ServerSocket.v1.apk");
+		configBuilder.setConfigPath(dataDir + File.separator + "test-impl-using-serversocket-demo-arg-return.config");
+		appSearch = new AppSearch(configBuilder.build());
+		try {
+			Application app = appSearch.processAPK(new File(configBuilder.getApkPath()));
+			assertEquals(3, app.getMatchesCount());
+			Set<String> expectedRules = new HashSet<String>(Arrays.asList(
+					new String[]{"socket communication"}));
+			Set<String> expectedDisjunctIds = new HashSet<String>(Arrays.asList(new String[] {
+					"accept socket",
+					"ServerSocket init, with port",
+					"ServerSocket init, no args, return"
+			}));
+			Set<String> matchedRules = new HashSet<String>();
+			Set<String> matchedDisjunctIds = new HashSet<String>();
+			for (MatchedRecord r: app.getMatchesList()) {
+				matchedRules.add(r.getRuleName());
+				matchedDisjunctIds.add(r.getDisjunctId());
+				// Each disjunct id is matched 3 times.
+				assertEquals(1, r.getCallSitesCount());
+				assertEquals(3, r.getCallSites(0).getCallersCount());
+			}
+			assertEquals(expectedRules, matchedRules);
+			assertEquals(expectedDisjunctIds, matchedDisjunctIds);
+		} catch (NoSuchAlgorithmException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }

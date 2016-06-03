@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +23,7 @@ import gtisc.apiscanner.ApiScanner.CallSite;
 import gtisc.apiscanner.ApiScanner.ConjunctRule;
 import gtisc.apiscanner.ApiScanner.DisjunctRule;
 import gtisc.apiscanner.ApiScanner.MatchedRecord;
+import gtisc.apiscanner.ApiScanner.RegexRule;
 import gtisc.apiscanner.ApiScanner.Result;
 import gtisc.apiscanner.ApiScanner.ScannerConfig;
 import gtisc.apiscanner.ApiScanner.ScannerRule;
@@ -35,6 +37,7 @@ import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
+import soot.Type;
 import soot.Unit;
 import soot.jimple.InvokeExpr;
 
@@ -112,7 +115,12 @@ public class AppSearch {
 		// maps method Signature to SootMethod
 		Map<String, SootMethod> methodDefs = new HashMap<String, SootMethod>();
 		// maps method Name or SubSignature to SootMethods
-		Map<String, Set<SootMethod>> methodNameOrSubSigDefs = new HashMap<String, Set<SootMethod>>(); 
+		Map<String, Set<SootMethod>> methodNameOrSubSigDefs = new HashMap<String, Set<SootMethod>>();
+		// TODO: ArgTypes and ReturnType is currently inefficient now! Implement a more efficient version when have time.
+		// maps arg types to SootMethods
+		Map<String, Set<SootMethod>> argTypesDefs = new HashMap<String, Set<SootMethod>>();
+		// maps return type to SootMethods
+		Map<String, Set<SootMethod>> returnTypeDefs = new HashMap<String, Set<SootMethod>>();
 
 		// For methods that's not analyzed yet, i.e. non-application classes!
 		// maps package name to the set of calling sites
@@ -123,6 +131,12 @@ public class AppSearch {
 		Map<String, SootMethod> methodInvocations = new HashMap<String, SootMethod>();
 		// maps method name or SubSignature to method invocation unit and the caller SootMethod
 		Map<String, Set<SootMethod>> methodNameOrSubSigInvocations = new HashMap<String, Set<SootMethod>>();
+		
+		// TODO: ArgTypes and ReturnType is currently inefficient now! 
+		// maps arg types to the invocation SootMethod
+		Map<String, Set<SootMethod>> argTypesInvocations = new HashMap<String, Set<SootMethod>>();
+		// maps return type to SootMethods
+		Map<String, Set<SootMethod>> returnTypeInvocations = new HashMap<String, Set<SootMethod>>();
 		// maps calling sites to callers
 		Map<SootMethod, Set<SootMethod>> callee2caller = new HashMap<SootMethod, Set<SootMethod>>();
 		
@@ -178,6 +192,20 @@ public class AppSearch {
 					if (!methodNameOrSubSigDefs.containsKey(methodName))
 						methodNameOrSubSigDefs.put(methodName, new HashSet<SootMethod>());
 					methodNameOrSubSigDefs.get(methodName).add(sootMethod);
+					
+					// collect method arg types and return types
+					List<String> args = new ArrayList<String>();
+					for (Type t : sootMethod.getParameterTypes()) {
+						args.add(t.toString());
+					}
+					String argType = String.join(",", args);
+					String returnType = sootMethod.getReturnType().toString();
+					if (!argTypesDefs.containsKey(argType))
+						argTypesDefs.put(argType, new HashSet<SootMethod>());
+					argTypesDefs.get(argType).add(sootMethod);
+					if (!returnTypeDefs.containsKey(returnType)) 
+						returnTypeDefs.put(returnType, new HashSet<SootMethod>());
+					returnTypeDefs.get(returnType).add(sootMethod);
 									
 					// collect class
 					if (sootClass.isApplicationClass()) {
@@ -247,6 +275,20 @@ public class AppSearch {
 							methodNameOrSubSigInvocations.put(name, new HashSet<SootMethod>());
 						methodNameOrSubSigInvocations.get(name).add(targetMethod);
 
+						// collect method arg types and return types
+						List<String> args = new ArrayList<String>();
+						for (Type t : targetMethod.getParameterTypes()) {
+							args.add(t.toString());
+						}
+						String argType = String.join(",", args);
+						String returnType = targetMethod.getReturnType().toString();
+						if (!argTypesInvocations.containsKey(argType))
+							argTypesInvocations.put(argType, new HashSet<SootMethod>());
+						argTypesInvocations.get(argType).add(targetMethod);
+						if (!returnTypeInvocations.containsKey(returnType)) 
+							returnTypeInvocations.put(returnType, new HashSet<SootMethod>());
+						returnTypeInvocations.get(returnType).add(targetMethod);
+
 						// classes, packages
 						SootClass targetClass = targetMethod.getDeclaringClass();
 						String targetClassName = targetClass.getName();
@@ -296,8 +338,15 @@ public class AppSearch {
 
 		// Match the rules
 		System.out.println("Matching the specified rules");
-		boolean found = mathcesRule(packageDefs, classDefs, methodDefs, methodNameOrSubSigDefs,
-				packageInvocations, classInvocations, methodInvocations, methodNameOrSubSigInvocations, callee2caller,
+		boolean found = mathcesRule(
+				// All the definition related
+				packageDefs, classDefs, methodDefs, methodNameOrSubSigDefs, argTypesDefs, returnTypeDefs,
+				// All the invocation related
+				packageInvocations, classInvocations, methodInvocations, methodNameOrSubSigInvocations,
+				argTypesInvocations, returnTypeInvocations,
+				// The mapping from callee to caller
+				callee2caller,
+				// The result
 				appBuilder);
 		
 		// Cleanup
@@ -314,11 +363,16 @@ public class AppSearch {
 			Map<String, Set<SootMethod>> classDefs,
 			Map<String, SootMethod> methodDefs,
 			Map<String, Set<SootMethod>> methodNameOrSubSigDefs,
+			Map<String, Set<SootMethod>> argTypesDefs,
+			Map<String, Set<SootMethod>> returnTypeDefs,
 			// Non-application classes, such as android.app.*, java.util.*.
 			Map<String, Set<SootMethod>> packageInvocations,			
 			Map<String, Set<SootMethod>> classInvocations,
 			Map<String, SootMethod> methodInvocations,
 			Map<String, Set<SootMethod>> methodNameOrSubSigInvocations,
+			Map<String, Set<SootMethod>> argTypesInvocations,
+			Map<String, Set<SootMethod>> returnTypeInvocations,
+			// Maps callee to caller
 			Map<SootMethod, Set<SootMethod>> callee2caller,
 			// Application.Builder, used to store the search results
 			Application.Builder appBuilder
@@ -364,13 +418,24 @@ public class AppSearch {
 									packageDefs, packageInvocations, userMethods, frameworkMethods);
 							initialized = true;
 						}
+						// Args Types, note that arg types are combined to form a new rule
 						if (simpleRule.getArgTypesCount() > 0) {
-							// Not implemented
-							System.out.println("not implemented");
+							List<String> checkArgTypes = new ArrayList<String>();
+							for (RegexRule argType : simpleRule.getArgTypesList()) {
+								checkArgTypes.add(argType.getContent());
+							}
+							RegexRule.Builder checkArgType = RegexRule.newBuilder();
+							checkArgType.setContent(String.join(",", checkArgTypes));
+							checkArgType.setPartialMatch(simpleRule.getArgTypes(0).getPartialMatch());
+							AppSearchUtil.checkRegexRule(checkArgType.build(), initialized,
+									argTypesDefs, argTypesInvocations, userMethods, frameworkMethods);
+							initialized = true;
 						}
+						// Return type
 						if (simpleRule.hasReturnType()) {
-							// Not implemented
-							System.out.println("not implemented");
+							AppSearchUtil.checkRegexRule(simpleRule.getReturnType(), initialized,
+									returnTypeDefs, returnTypeInvocations, userMethods, frameworkMethods);
+							initialized = true;
 						}
 						if (simpleRule.getRawStringsCount() > 0) {
 							// Not implemented
