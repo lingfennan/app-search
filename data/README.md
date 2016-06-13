@@ -1,3 +1,4 @@
+# All the Critical cues for detecting Bluetooth, NFC, WifiP2P usage etc. #
 Bluetooth:
 - Permission
 	android.permission.BLUETOOTH_ADMIN
@@ -85,3 +86,24 @@ NFC: host-based card emulation. This allows any Android application to emulate a
 		initialize
 		discoverPeers or discoverServices
 		connect
+
+
+# Description of all the config files.
+ctl-and-comm.config
+- tcp/udp socket, bluetooth, nfc and wifi manager, the very first version, I think not useful anymore.
+
+sock-server-client.config
+- the tcp/udp socket (inet) and unix socket
+
+wifi-ble-nfc.config
+- the wifip2p, bluetooth and nfc usage config
+
+general-sock-usage.config
+- the latest version of socket communication, including tcp/udp socket (inet), unix socket, nfc socket, bluetooth socket (wifi p2p is recorded, but not useful)
+- this file is basically the union of sock-server-client.config and wifi-ble-nfc.config
+
+test-impl-using-\*.config
+- the configurations used tests
+
+hello-world.config / port-backdoor.config
+- demo config, not useful at all
